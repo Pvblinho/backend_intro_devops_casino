@@ -1,0 +1,55 @@
+name: Deploy Vidal Casino to AWS
+
+on:
+  push:
+    branches:
+      - deploy
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/casino-backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/casino-backend:${{ github.sha }}
+
+  deploy-to-aws:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to AWS via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Entrar a la carpeta de la app (créala en tu EC2 si no existe)
+            mkdir -p /home/ubuntu/app && cd /home/ubuntu/app
+            
+            # Autenticar Docker en la EC2 con las credenciales de AWS
+            export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            export AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}
+            
+            # Descargar la última versión de la imagen que subió el paso anterior
+            docker pull ${{ secrets.DOCKER_USERNAME }}/casino-backend:latest
+            
+            # Detener el contenedor viejo si existe y levantar el nuevo
+            docker stop casino-back-container || true
+            docker rm casino-back-container || true
+            docker run -d --name casino-back-container -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/casino-backend:latest
