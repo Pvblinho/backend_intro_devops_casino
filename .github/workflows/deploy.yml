@@ -25,3 +25,18 @@ jobs:
           push: true
           tags: |
             pvblinho/casino-backend:latest
+  deploy-to-aws:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to AWS via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker stop casino-back-container || true
+            docker rm casino-back-container || true
+            docker pull pvblinho/casino-backend:latest
+            docker run -d --name casino-back-container -p 3000:3000 pvblinho/casino-backend:latest
