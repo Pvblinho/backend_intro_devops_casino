@@ -3,7 +3,7 @@ name: Deploy Backend Vidal Casino to AWS
 on:
   push:
     branches:
-      - deploy
+      - dev
 
 jobs:
   build-and-push:
