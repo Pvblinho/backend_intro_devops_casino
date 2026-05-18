@@ -25,25 +25,3 @@ jobs:
           push: true
           tags: |
             pvblinho/casino-backend:latest
-            pvblinho/casino-backend:${{ github.sha }}
-
-  deploy-to-aws:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to AWS via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ubuntu
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            mkdir -p /home/ubuntu/app && cd /home/ubuntu/app
-            
-            # Detener contenedores previos si existen
-            docker stop casino-back-container || true
-            docker rm casino-back-container || true
-            
-            # Descargar la nueva imagen y levantar el contenedor en el puerto 3000
-            docker pull pvblinho/casino-backend:latest
-            docker run -d --name casino-back-container -p 3000:3000 pvblinho/casino-backend:latest
