@@ -1,11 +1,13 @@
-FROM node:20-alpine AS build_stage
-WORKDIR /app
-COPY package*.json .
-RUN npm install
-COPY . .
+FROM node:20-slim
 
-FROM node:20-alpine
 WORKDIR /app
-COPY --from=build_stage /app .
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY . .
+RUN chown -R node:node /app
 USER node
-CMD ["npm", "start"]
+
+EXPOSE 3000
+
+CMD ["node", "src/server.js"]
