@@ -1,15 +1,8 @@
 node_modules
-<<<<<<< HEAD
-package-lock.json
-.env
-*.log
-coverage
-=======
 .env
 *.log
 coverage
 .DS_Store
->>>>>>> upstream/main
 
 # Claude Code
 .claude/
